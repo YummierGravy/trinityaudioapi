@@ -1,9 +1,7 @@
 // Copyright © 2026 CCP ehf.
 //
 //    Description:
-//      A box placed in world space. Unlike EveBoxVolume, which is a box
-//      in its owner's object space, the transform given here is already
-//      in world space.
+//      An interface for placing a box volume in the world.
 
 #pragma once
 
