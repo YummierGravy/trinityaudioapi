@@ -1,15 +1,16 @@
 // Copyright © 2026 CCP ehf.
 //
 //    Description:
-//      An interface for volume placement, audio will use that to wrap
-//      AK::SpatialAudio::SetRoom from the Wwise SDK
+//      A box placed in world space. Unlike EveBoxVolume, which is a box
+//      in its owner's object space, the transform given here is already
+//      in world space.
 
 #pragma once
 
-#ifndef ITr2VolumeObject_h_
-#define ITr2VolumeObject_h_
+#ifndef ITr2BoxVolume_h_
+#define ITr2BoxVolume_h_
 
-BLUE_INTERFACE( ITr2VolumeObject ) :
+BLUE_INTERFACE( ITr2BoxVolume ) :
 	public IRoot
 {
 	/**
@@ -29,7 +30,7 @@ BLUE_INTERFACE( ITr2VolumeObject ) :
 	virtual void SetEnabled( bool enabled ) = 0;
 
 	/**
-	 * @brief Removes the volume from the audio engine. The object can be placed again with SetTransform.
+	 * @brief Removes the volume. The object can be placed again with SetTransform.
 	 */
 	virtual void Remove() = 0;
 };
