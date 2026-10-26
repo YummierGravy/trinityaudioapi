@@ -142,7 +142,9 @@ class CarbonBuildMacOS(buildName: String, configType: String, preset: String, ag
             executionMode = BuildStep.ExecutionMode.RUN_ON_FAILURE
             scriptContent = """
                 mkdir -p crashdumps
-                find ~/Library/Logs/DiagnosticReports -newer .tests-started \( -name '*.ips' -o -name '*.crash' \) -exec cp {} crashdumps/ \;
+                if [ -f .tests-started ]; then
+                  find ~/Library/Logs/DiagnosticReports -newer .tests-started \( -name '*.ips' -o -name '*.crash' \) -exec cp {} crashdumps/ \;
+                fi
             """.trimIndent()
         }
         exec {
