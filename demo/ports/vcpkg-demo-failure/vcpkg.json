@@ -1,0 +1,5 @@
+{
+  "name": "vcpkg-demo-failure",
+  "version": "0.0.1",
+  "description": "Demo port that always fails to build. Do not merge."
+}
