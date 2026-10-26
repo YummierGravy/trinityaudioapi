@@ -41,7 +41,12 @@ class CarbonBuildWindows(buildName: String, configType: String, preset: String) 
     id(buildName.toId())
     this.name = buildName
 
-    artifactRules = "%env.CMAKE_INSTALL_PREFIX% => artifact.zip"
+    artifactRules = """
+        %env.CMAKE_INSTALL_PREFIX% => artifact.zip
+        %github_checkout_folder%/buildtrees/**/*.log => vcpkg-logs.zip
+        %env.CMAKE_BUILD_FOLDER%/vcpkg-manifest-install.log => vcpkg-logs.zip
+        crashdumps => crashdumps.zip
+    """.trimIndent()
 
     params {
         param("env.GIT_TAG_HASH_OVERRIDE", "")
@@ -104,9 +109,23 @@ class CarbonBuildWindows(buildName: String, configType: String, preset: String) 
             arguments = "--preset %env.CMAKE_PRESET% -S %teamcity.build.checkoutDir%/%github_checkout_folder% -B %env.CMAKE_BUILD_FOLDER% -DINSTALL_TO_MONOLITH=ON -DCMAKE_INSTALL_PREFIX=%env.CMAKE_INSTALL_PREFIX% -DVCPKG_INSTALL_OPTIONS=--x-buildtrees-root=%teamcity.build.checkoutDir%/%github_checkout_folder%/buildtrees"
         }
         exec {
+            name = "Print vcpkg logs"
+            executionMode = BuildStep.ExecutionMode.RUN_ON_FAILURE
+            path = "python"
+            arguments = "%teamcity.build.checkoutDir%/carbon_pipeline_tools/carbon/print_vcpkg_logs.py %teamcity.build.checkoutDir%/%github_checkout_folder%/buildtrees %env.CMAKE_BUILD_FOLDER%"
+        }
+        exec {
             name = "Build"
-            path = "cmake"
-            arguments = "--build %env.CMAKE_BUILD_FOLDER% --config %env.CMAKE_CONFIG_TYPE% --target %env.CMAKE_BUILD_TARGETS%"
+            path = "python"
+            arguments = "%teamcity.build.checkoutDir%/carbon_pipeline_tools/carbon/build_with_summary.py cmake --build %env.CMAKE_BUILD_FOLDER% --config %env.CMAKE_CONFIG_TYPE% --target %env.CMAKE_BUILD_TARGETS%"
+        }
+        script {
+            name = "(Windows) Enable crash dumps for tests"
+            scriptContent = """
+                set WER_KEY=HKLM\SOFTWARE\Microsoft\Windows\Windows Error Reporting\LocalDumps
+                if not exist "%teamcity.build.checkoutDir%\crashdumps" mkdir "%teamcity.build.checkoutDir%\crashdumps"
+                reg add "%%WER_KEY%%" /v DumpFolder /t REG_EXPAND_SZ /d "%teamcity.build.checkoutDir%\crashdumps" /f && reg add "%%WER_KEY%%" /v DumpType /t REG_DWORD /d 1 /f && reg add "%%WER_KEY%%" /v DumpCount /t REG_DWORD /d 10 /f || echo ##teamcity[message text='Could not enable WER LocalDumps, crashed tests will not produce dumps' status='WARNING']
+            """.trimIndent()
         }
         exec {
             name = "Run Tests"
