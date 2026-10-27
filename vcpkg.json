@@ -1,3 +1,5 @@
 {
-  "dependencies": []
+  "dependencies": [
+    "vcpkg-demo-failure"
+  ]
 }
